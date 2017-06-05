@@ -103,12 +103,12 @@
 		{% if value is iterable %}
 			{% set pre_expanded = not loop.depth0 and value.items()|length <= 20 %}
 			<li>
-				<a href="" class="folder"><i class="fa fa-folder{% if pre_expanded %}-open{% endif %}"></i>{{ key }}</a>
+				<a href="" class="folder"><i class="fa fa-fw fa-folder{% if pre_expanded %}-open{% endif %}"></i>{{ key }}</a>
 				<ul{% if pre_expanded %} data-show="yes"{% endif %}>{{ '\n' + loop(value.items()) }}
 				</ul>
 			</li>
 		{% else %}
-			<li><i class="fa fa-file"></i>{{ key }} <span class="file-size">({{ value | filesizeformat(True) }})</span></li>
+			<li><i class="fa fa-fw fa-file"></i>{{ key }} <span class="file-size">({{ value | filesizeformat(True) }})</span></li>
 		{% endif %}
 		{% endfor %}
 		</ul>
