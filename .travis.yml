@@ -5,16 +5,29 @@ python: "3.6"
 dist: trusty
 sudo: required
 
+env:
+  - ES_VERSION="5.4.1"
+
 matrix:
   fast_finish: true
 
 cache: pip
+
+addons:
+  apt:
+    packages:
+      - oracle-java8-set-default
 
 services:
   mysql
 
 before_install:
   - mysql -u root -e 'CREATE DATABASE nyaav2 DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;'
+  # Download, install and run Elasticsearch
+  - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb
+  # TODO: verify sha1 checksum from https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$ES_VERSION.deb.sha1
+  - sudo dpkg -i --force-confnew elasticsearch-$ES_VERSION.deb
+  - sudo service elasticsearch start
 
 install:
   - pip install -r requirements.txt
@@ -23,6 +36,7 @@ install:
   - ./db_migrate.py stamp head
 
 script:
+  - curl -v http://localhost:9200/ # Test Elasticsearch connection
   - python -m pytest tests/
   - ./lint.sh --check
 
