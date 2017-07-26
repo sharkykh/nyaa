@@ -8,6 +8,7 @@ from werkzeug.datastructures import CombinedMultiDict
 from sqlalchemy.orm import joinedload
 
 from nyaa import app, backend, db, forms, models, torrents
+from nyaa.template_utils import get_category_id_map
 from nyaa.utils import cached_function
 
 bp = flask.Blueprint('torrents', __name__)
@@ -249,7 +250,7 @@ def upload():
 def _create_upload_category_choices():
     ''' Turns categories in the database into a list of (id, name)s '''
     choices = [('', '[Select a category]')]
-    id_map = backend.get_category_id_map()
+    id_map = get_category_id_map()
 
     for key in sorted(id_map.keys()):
         cat_names = id_map[key]
