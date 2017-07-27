@@ -17,11 +17,55 @@
 {% endif %}
 {% endif %}
 
+{% macro user_form(user, is_available) %}
+{% if is_available %}
+<form class="form" id="torrent-mass-action-form" action="{{ url_for('users.update_torrents', user_name=g.user.username) }}" method="post">
+	{{ mass_action_form.csrf_token }}
+	<div class="form-group">
+		<select name="action" id="action" class="form-control" title="action">
+			<option value="move_category">Move To Category</option>
+			<optgroup label="Hide / Unhide">
+				<option value="hide">Hide</option>
+				<option value="unhide">Unhide</option>
+			</optgroup>
+			<optgroup label="Remake">
+				<option value="remake">Remake</option>
+				<option value="unremake">Unremake</option>
+			</optgroup>
+			{% if user.is_admin %}
+			<optgroup label="Admin">
+				<option value="delete">Delete</option>
+				<option value="anonymise">Make Anonymous</option>
+				<option value="unanonymise">Remove Anonymity</option>
+			</optgroup>
+			{% endif %}
+		</select>
+		<div class="category-select">
+			<select class="form-control" title="Category" name="category">
+				{{ render_category_options(search) | tabindent(4) }}
+			</select>
+		</div>
+		<div class="btn-container">
+			<button class="btn btn-success" id="select-all">Select Visible Items</button>
+			<button type="submit" class="btn btn-primary" id="apply-action">Apply</button>
+		</div>
+	</div>
+	{{ caller() }}
+</form>
+{% else %}
+	{{ caller() }}
+{% endif %}
+{% endmacro %}
+
 {% if (use_elastic and torrent_query.hits.total > 0) or (torrent_query.items) %}
+{% call user_form(user, is_current_user) %}
 <div class="table-responsive">
 	<table class="table table-bordered table-hover table-striped torrent-list">
 		<thead>
 			<tr>
+				{% if is_current_user %}
+				<th></th>
+				{% endif %}
 				{% call render_column_header("hdr-category", "width:80px;", center_text=True) %}
 					<div>Category</div>
 				{% endcall %}
@@ -58,8 +102,14 @@
 			{% set torrents = torrent_query if use_elastic else torrent_query.items %}
 			{% for torrent in torrents %}
 			<tr class="{% if torrent.deleted %}deleted{% elif torrent.hidden %}warning{% elif torrent.remake %}danger{% elif torrent.trusted %}success{% else %}default{% endif %}">
+				{% set torrent_id = torrent.meta.id if use_elastic else torrent.id %}
 				{% set cat_id = use_elastic and ((torrent.main_category_id|string) + '_' + (torrent.sub_category_id|string)) or torrent.sub_category.id_as_string %}
 				{% set icon_dir = config.SITE_FLAVOR %}
+				{% if is_current_user %}
+				<td class="checkbox-column">
+					<input type="checkbox" class="checkbox" name="selected_torrents" value="{{ torrent_id }}">
+				</td>
+				{% endif %}
 				<td style="padding:0 4px;">
 				{% if use_elastic %}
 				<a href="{{ url_for('main.home', c=cat_id) }}" title="{{ category_name(cat_id) }}">
@@ -70,7 +120,6 @@
 				</a>
 				</td>
 				<td colspan="2">
-					{% set torrent_id = torrent.meta.id if use_elastic else torrent.id %}
 					{% set com_count = torrent.comment_count %}
 					{% if com_count %}
 					<a href="{{ url_for('torrents.view', torrent_id=torrent_id, _anchor='comments') }}" class="comments" title="{{ '{c} comment{s}'.format(c=com_count, s='s' if com_count > 1 else '') }}">
@@ -114,6 +163,7 @@
 		</tbody>
 	</table>
 </div>
+{% endcall %}
 {% else %}
 <h3>No results found</h3>
 {% endif %}

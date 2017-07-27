@@ -4,6 +4,7 @@ import flask
 from flask_paginate import Pagination
 
 from itsdangerous import BadSignature, URLSafeSerializer
+from wtforms.validators import ValidationError
 
 from nyaa import app, db, forms, models
 from nyaa.search import (DEFAULT_MAX_SEARCH_RESULT, DEFAULT_PER_PAGE, SERACH_PAGINATE_DISPLAY_MSG,
@@ -21,8 +22,10 @@ def view_user(user_name):
         flask.abort(404)
 
     admin_form = None
+    mass_action_form = None
     if flask.g.user and flask.g.user.is_moderator and flask.g.user.level > user.level:
         admin_form = forms.UserForm()
+        mass_action_form = forms.UserTorrentMassAction(flask.request.form, user=flask.g.user)
         default, admin_form.user_class.choices = _create_user_class_choices(user)
         if flask.request.method == 'GET':
             admin_form.user_class.data = default
@@ -87,6 +90,9 @@ def view_user(user_name):
         query_args['logged_in_user'] = flask.g.user
         if flask.g.user.is_moderator:  # God mode
             query_args['admin'] = True
+        if flask.g.user.id == user.id:
+            mass_action_form = forms.UserTorrentMassAction(flask.request.form, user=flask.g.user)
+            is_logged_in_user_account = True
 
     # Use elastic search for term searching
     rss_query_string = _generate_query_string(search_term, category, quality_filter, user_name)
@@ -118,7 +124,10 @@ def view_user(user_name):
                                      user_page=True,
                                      rss_filter=rss_query_string,
                                      level=user_level,
-                                     admin_form=admin_form)
+                                     admin_form=admin_form,
+                                     mass_action_form=mass_action_form,
+                                     is_current_user=is_logged_in_user_account)
+
     # Similar logic as home page
     else:
         if use_elastic:
@@ -134,7 +143,33 @@ def view_user(user_name):
                                      user_page=True,
                                      rss_filter=rss_query_string,
                                      level=user_level,
-                                     admin_form=admin_form)
+                                     admin_form=admin_form,
+                                     mass_action_form=mass_action_form,
+                                     is_current_user=is_logged_in_user_account)
+
+
+@bp.route('/user/<user_name>/torrents', methods=['POST'])
+def update_torrents(user_name):
+    selected_torrent_ids = flask.request.form.getlist('selected_torrents')
+    form = forms.UserTorrentMassAction(
+        flask.request.form,
+        user=flask.g.user,
+        selected_torrents=selected_torrent_ids)
+
+    try:
+        status = 'info'
+        if form.validate(user=flask.g.user):
+            result = form.apply_user_action()
+            if result['ok'] is False:
+                status = 'danger'
+
+        flask.flash(flask.Markup(
+            f"<strong>{result['message']}</strong>."), status)
+    except ValidationError as err:
+        flask.flash(flask.Markup(
+            f"<strong>{str(err)}</strong>."), 'danger')
+
+    return flask.redirect(flask.url_for('users.view_user', user_name=user_name))
 
 
 @bp.route('/user/activate/<payload>')
