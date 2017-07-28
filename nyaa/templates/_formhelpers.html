@@ -140,11 +140,13 @@
 	</div>
 {% endmacro %}
 
-{% macro render_category_options(search, use_title=True) %}
-{% set all_cats = search is defined and search.category == '0_0' or not search %}
+{% macro render_category_options(search, use_title=True, all_cats=True) %}
+{% if all_cats %}
+{% set select_all_cats = search is defined and search.category == '0_0' or not search %}
 <option value="0_0" title="All categories"{% if all_cats %} selected{% endif %}>
 	{{- 'All categories' -}}
 </option>
+{% endif %}
 {% for cat_id, cat_names in get_category_id_map().items() %}
 <option value="{{ cat_id }}" title="{{ cat_names['title' if use_title else 'name'] }}"
 		{%- if search is defined and search.category == cat_id %} selected{% endif -%}

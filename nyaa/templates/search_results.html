@@ -19,10 +19,12 @@
 
 {% macro user_form(user, is_available) %}
 {% if is_available %}
-<form class="form" id="torrent-mass-action-form" action="{{ url_for('users.update_torrents', user_name=g.user.username) }}" method="post">
+
+<form class="form-inline" id="torrent-mass-action" action="{{ url_for('users.update_torrents', user_name=g.user.username) }}" method="post">
 	{{ mass_action_form.csrf_token }}
-	<div class="form-group">
-		<select name="action" id="action" class="form-control" title="action">
+	<div class="mass-action">
+		<select name="action" id="action" class="form-control" title="Choose an action">
+			<option value="none" selected>Select action</option>
 			<option value="move_category">Move To Category</option>
 			<optgroup label="Hide / Unhide">
 				<option value="hide">Hide</option>
@@ -40,15 +42,11 @@
 			</optgroup>
 			{% endif %}
 		</select>
-		<div class="category-select">
-			<select class="form-control" title="Category" name="category">
-				{{ render_category_options(search) | tabindent(4) }}
-			</select>
-		</div>
-		<div class="btn-container">
-			<button class="btn btn-success" id="select-all">Select Visible Items</button>
-			<button type="submit" class="btn btn-primary" id="apply-action">Apply</button>
-		</div>
+		<select class="form-control category-list hidden" name="category" title="Choose a category">
+			<option value="none">Select a category</option>
+			{{ render_category_options(None, use_title=False, all_cats=False) | tabindent(4) }}
+		</select>
+		<button type="submit" class="btn btn-primary" id="apply-action">Apply</button>
 	</div>
 	{{ caller() }}
 </form>
@@ -64,8 +62,8 @@
 		<thead>
 			<tr>
 				{% if is_current_user %}
-				{% call render_column_header("hdr-update", "width:30px;", center_text=True) %}
-					<div></div>
+				{% call render_column_header("hdr-update", "width:30px; vertical-align: middle;", center_text=True) %}
+					<div><input type="checkbox" class="checkbox" name="select-visible" title="Select Visible Items" /></div>
 				{% endcall %}
 				{% endif %}
 				{% call render_column_header("hdr-category", "width:80px;", center_text=True) %}
@@ -109,7 +107,7 @@
 				{% set icon_dir = config.SITE_FLAVOR %}
 				{% if is_current_user %}
 				<td>
-					<input type="checkbox" class="checkbox" name="selected_torrents" value="{{ torrent_id }}">
+					<input type="checkbox" class="checkbox" name="selected_torrents" value="{{ torrent_id }}" />
 				</td>
 				{% endif %}
 				<td style="padding:0 4px;">

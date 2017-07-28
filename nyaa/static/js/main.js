@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // Adds torrent mass action functionality when user is permitted to do so.
 document.addEventListener('DOMContentLoaded', function () {
-	var form = document.querySelector('#torrent-mass-action-form');
+	var form = document.querySelector('form#torrent-mass-action');
 	if (!form) {
 		return;
 	}
@@ -199,14 +199,14 @@ document.addEventListener('DOMContentLoaded', function () {
 	var allSelected = false;
 
 	var torrentActionSelectEl = form.querySelector('#action');
-	var categorySelectEl = form.querySelector('.category-select');
-	var selectAllBtn = form.querySelector('#select-all');
+	var categorySelectEl = form.querySelector('select.category-list');
 	var torrentTable = document.querySelector('.torrent-list');
+	var selectVisibleCB = torrentTable.querySelector('input[name="select-visible"]');
 
 	Object.defineProperty(state, 'allSelected', {
 		get: function () { return allSelected; },
 		set: function (value) {
-			var checkboxes = Array.prototype.slice.call(torrentTable.querySelectorAll('input[type="checkbox"]'));
+			var checkboxes = Array.prototype.slice.call(torrentTable.querySelectorAll('tbody input[type="checkbox"]'));
 			checkboxes.forEach(function (chkBox) {
 				chkBox.checked = value;
 			});
@@ -223,8 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	selectAllBtn.addEventListener('click', function () {
-		event.preventDefault();
+	selectVisibleCB.addEventListener('change', function (event) {
 		state.allSelected = !state.allSelected;
 	});
 });
