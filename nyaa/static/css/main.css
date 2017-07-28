@@ -515,8 +515,4 @@ td.report-action-column {
 	-ms-flex: 1;
 	flex: 1
 }
-
-.checkbox-column {
-	width: 5px;
-}
 /* [End] Torrent Mass Action Form */

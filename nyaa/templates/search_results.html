@@ -64,7 +64,9 @@
 		<thead>
 			<tr>
 				{% if is_current_user %}
-				<th></th>
+				{% call render_column_header("hdr-update", "width:30px;", center_text=True) %}
+					<div></div>
+				{% endcall %}
 				{% endif %}
 				{% call render_column_header("hdr-category", "width:80px;", center_text=True) %}
 					<div>Category</div>
@@ -106,7 +108,7 @@
 				{% set cat_id = use_elastic and ((torrent.main_category_id|string) + '_' + (torrent.sub_category_id|string)) or torrent.sub_category.id_as_string %}
 				{% set icon_dir = config.SITE_FLAVOR %}
 				{% if is_current_user %}
-				<td class="checkbox-column">
+				<td>
 					<input type="checkbox" class="checkbox" name="selected_torrents" value="{{ torrent_id }}">
 				</td>
 				{% endif %}
