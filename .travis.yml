@@ -18,14 +18,17 @@ before_install:
 
 install:
   - pip install -r requirements.txt
-  - pip install pytest-cov
+  - pip install pytest-cov codacy-coverage
   - sed "s/mysql:\/\/test:test123@/mysql:\/\/root:@/" config.example.py > config.py
   - python db_create.py
   - ./db_migrate.py stamp head
 
 script:
-  - pytest --cov=nyaa --cov-report=term tests
+  - pytest --cov=nyaa --cov-report=xml tests
   - ./lint.sh --check
+  
+after_success:
+  - python-codacy-coverage -r coverage.xml
 
 notifications:
   email: false
